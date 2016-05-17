@@ -88,12 +88,6 @@
     <EmbeddedResource Include="Runtime\Scripts\Scratch.js" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Jint\Jint.csproj">
-      <Project>{678738da-f723-4920-b9e5-cad667104bda}</Project>
-      <Name>Jint</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="Parser\Scripts\underscore.js" />
   </ItemGroup>
   <ItemGroup>

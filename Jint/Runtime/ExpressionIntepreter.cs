@@ -24,6 +24,16 @@ namespace Jint.Runtime
             return _engine.EvaluateExpression(expression);
         }
 
+        private JsValue EvaluateJsValueExpression(Expression expression)
+        {
+            return _engine.EvaluateJsValueExpression(expression);
+        }
+
+        private Reference EvaluateReferenceExpression(Expression expression)
+        {
+            return _engine.EvaluateReferenceExpression(expression);
+        }
+
         public JsValue EvaluateConditionalExpression(ConditionalExpression conditionalExpression)
         {
             var lref = _engine.EvaluateExpression(conditionalExpression.Test);
@@ -677,8 +687,8 @@ namespace Jint.Runtime
                                 StrictModeScope.IsStrictModeCode
                             );
                         }
-
-                        propDesc = new PropertyDescriptor(get: get, set: null, enumerable: true, configurable:true);
+                        
+                        propDesc = new PropertyDescriptor(get, null, true, true);
                         break;
                     
                     case PropertyKind.Set:
@@ -816,7 +826,8 @@ namespace Jint.Runtime
             }
             else
             {
-                arguments = callExpression.Arguments.Select(EvaluateExpression).Select(_engine.GetValue).ToArray();
+
+                arguments = callExpression.Arguments.Select((Func<Expression, object>)EvaluateExpression).Select((Func<object, JsValue>)_engine.GetValue).ToArray();
 
                 if (callExpression.CanBeCached)
                 {
@@ -966,7 +977,7 @@ namespace Jint.Runtime
 
         public JsValue EvaluateNewExpression(NewExpression newExpression)
         {
-            var arguments = newExpression.Arguments.Select(EvaluateExpression).Select(_engine.GetValue).ToArray();
+            var arguments = newExpression.Arguments.Select((Func<Expression, object>)EvaluateExpression).Select((Func<object, JsValue>)_engine.GetValue).ToArray();
             
             // todo: optimize by defining a common abstract class or interface
             var callee = _engine.GetValue(EvaluateExpression(newExpression.Callee)).TryCast<IConstructor>();

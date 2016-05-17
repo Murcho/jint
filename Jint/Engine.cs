@@ -469,6 +469,79 @@ namespace Jint
             }
         }
 
+        public Reference EvaluateReferenceExpression(Expression expression)
+        {
+            _lastSyntaxNode = expression;
+
+            switch (expression.Type)
+            {
+                case SyntaxNodes.Identifier:
+                    return _expressions.EvaluateIdentifier(expression.As<Identifier>());
+
+                case SyntaxNodes.MemberExpression:
+                    return _expressions.EvaluateMemberExpression(expression.As<MemberExpression>());
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        public JsValue EvaluateJsValueExpression(Expression expression)
+        {
+            _lastSyntaxNode = expression;
+
+            switch (expression.Type)
+            {
+                case SyntaxNodes.AssignmentExpression:
+                    return _expressions.EvaluateAssignmentExpression(expression.As<AssignmentExpression>());
+
+                case SyntaxNodes.ArrayExpression:
+                    return _expressions.EvaluateArrayExpression(expression.As<ArrayExpression>());
+
+                case SyntaxNodes.BinaryExpression:
+                    return _expressions.EvaluateBinaryExpression(expression.As<BinaryExpression>());
+
+                case SyntaxNodes.CallExpression:
+                    return _expressions.EvaluateCallExpression(expression.As<CallExpression>());
+
+                case SyntaxNodes.ConditionalExpression:
+                    return _expressions.EvaluateConditionalExpression(expression.As<ConditionalExpression>());
+
+                case SyntaxNodes.FunctionExpression:
+                    return _expressions.EvaluateFunctionExpression(expression.As<FunctionExpression>());
+
+                case SyntaxNodes.Literal:
+                    return _expressions.EvaluateLiteral(expression.As<Literal>());
+
+                case SyntaxNodes.RegularExpressionLiteral:
+                    return _expressions.EvaluateLiteral(expression.As<Literal>());
+
+                case SyntaxNodes.LogicalExpression:
+                    return _expressions.EvaluateLogicalExpression(expression.As<LogicalExpression>());
+
+                case SyntaxNodes.NewExpression:
+                    return _expressions.EvaluateNewExpression(expression.As<NewExpression>());
+
+                case SyntaxNodes.ObjectExpression:
+                    return _expressions.EvaluateObjectExpression(expression.As<ObjectExpression>());
+
+                case SyntaxNodes.SequenceExpression:
+                    return _expressions.EvaluateSequenceExpression(expression.As<SequenceExpression>());
+
+                case SyntaxNodes.ThisExpression:
+                    return _expressions.EvaluateThisExpression(expression.As<ThisExpression>());
+
+                case SyntaxNodes.UpdateExpression:
+                    return _expressions.EvaluateUpdateExpression(expression.As<UpdateExpression>());
+
+                case SyntaxNodes.UnaryExpression:
+                    return _expressions.EvaluateUnaryExpression(expression.As<UnaryExpression>());
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
         /// <summary>
         /// http://www.ecma-international.org/ecma-262/5.1/#sec-8.7.1
         /// </summary>
@@ -658,7 +731,10 @@ namespace Jint
                 throw new ArgumentException("Can only invoke functions");
             }
 
-            return callable.Call(JsValue.FromObject(this, thisObj), arguments.Select(x => JsValue.FromObject(this, x)).ToArray());
+            var jsVal = JsValue.FromObject(this, thisObj);
+            var args = arguments.Select(x => JsValue.FromObject(this, x)).ToArray();
+            return callable.Call(jsVal, args);
+           // return callable.Call(JsValue.FromObject(this, thisObj), arguments.Select(x => JsValue.FromObject(this, x)).ToArray());
         }
 
         /// <summary>

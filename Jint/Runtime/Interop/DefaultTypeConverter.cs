@@ -88,14 +88,9 @@ namespace Jint.Runtime.Interop
                         }
                         var @vars = Expression.NewArrayInit(typeof(JsValue), tmpVars);
 
-                        var callExpresion = Expression.Block(Expression.Call(
-                                                Expression.Call(Expression.Constant(function.Target),
-                                                    function.Method,
-                                                    Expression.Constant(JsValue.Undefined, typeof(JsValue)),
-                                                    @vars),
-                                                jsValueToObject), Expression.Empty());
+                        var callExpresion = Expression.Call(Expression.Call(Expression.Constant(function.Target), function.Method, Expression.Constant(JsValue.Undefined, typeof(JsValue)), @vars), jsValueToObject);
 
-                        return Expression.Lambda(callExpresion, new ReadOnlyCollection<ParameterExpression>(@params));
+                        return Expression.Lambda(callExpresion, new ReadOnlyCollection<ParameterExpression>(@params).ToArray());
                     }
                     else if (genericType.Name.StartsWith("Func"))
                     {
@@ -108,12 +103,18 @@ namespace Jint.Runtime.Interop
                             @params[i] = Expression.Parameter(genericArguments[i], genericArguments[i].Name + i);
                         }
 
+                        var selection = @params.Select(p =>
+                        {
+                            var boxingExpression = Expression.Convert(p, typeof(object));
+                            return Expression.Call(null, jsValueFromObject, Expression.Constant(_engine, typeof(Engine)), boxingExpression);
+                        });
+
                         var @vars = 
-                            Expression.NewArrayInit(typeof(JsValue), 
-                                @params.Select(p => {
-                                    var boxingExpression = Expression.Convert(p, typeof(object));
-                                    return Expression.Call(null, jsValueFromObject, Expression.Constant(_engine, typeof(Engine)), boxingExpression);
-                                })
+                            Expression.NewArrayInit(typeof(JsValue), selection.ToArray()
+                                //@params.Select(p => {
+                                //    var boxingExpression = Expression.Convert(p, typeof(object));
+                                //    return Expression.Call(null, jsValueFromObject, Expression.Constant(_engine, typeof(Engine)), boxingExpression);
+                                //})
                             );
 
                         // the final result's type needs to be changed before casting,
@@ -133,7 +134,7 @@ namespace Jint.Runtime.Interop
                                                         ),                            
                                                     returnType);
 
-                        return Expression.Lambda(callExpresion, new ReadOnlyCollection<ParameterExpression>(@params));
+                        return Expression.Lambda(callExpresion, new ReadOnlyCollection<ParameterExpression>(@params).ToArray());
                     }
                 }
                 else
@@ -152,18 +153,12 @@ namespace Jint.Runtime.Interop
                         {
                             @params[i] = Expression.Parameter(typeof(object), arguments[i].Name);
                         }
-                        var @vars = Expression.NewArrayInit(typeof(JsValue), @params.Select(p => Expression.Call(null, typeof(JsValue).GetMethod("FromObject"), Expression.Constant(_engine, typeof(Engine)), p)));
+                        var selection = @params.Select(p => Expression.Call(null, typeof(JsValue).GetMethod("FromObject"), Expression.Constant(_engine, typeof(Engine)), p));
+                        var @vars = Expression.NewArrayInit(typeof(JsValue), selection.ToArray());
 
-                        var callExpression = Expression.Block(
-                                                Expression.Call(
-                                                    Expression.Call(Expression.Constant(function.Target),
-                                                        function.Method,
-                                                        Expression.Constant(JsValue.Undefined, typeof(JsValue)),
-                                                        @vars),
-                                                    typeof(JsValue).GetMethod("ToObject")),
-                                                Expression.Empty());
+                        var callExpression = Expression.Call(Expression.Constant(function.Target), function.Method, Expression.Constant(JsValue.Undefined, typeof(JsValue)),  @vars);
 
-                        var dynamicExpression = Expression.Invoke(Expression.Lambda(callExpression, new ReadOnlyCollection<ParameterExpression>(@params)), new ReadOnlyCollection<ParameterExpression>(@params));
+                        var dynamicExpression = Expression.Invoke(Expression.Lambda(callExpression, new ReadOnlyCollection<ParameterExpression>(@params).ToArray()), new ReadOnlyCollection<ParameterExpression>(@params).ToArray());
 
                         return Expression.Lambda(type, dynamicExpression, new ReadOnlyCollection<ParameterExpression>(@params));
                     }

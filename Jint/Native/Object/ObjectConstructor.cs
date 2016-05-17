@@ -111,8 +111,12 @@ namespace Jint.Native.Object
             {
                 throw new JavaScriptException(Engine.TypeError);
             }
-            
-            return o.Prototype ?? Null.Instance;
+
+            if (o.Prototype != null)
+            {
+                return (JsValue)o.Prototype;
+            }
+            return Null.Instance;
         }
 
         public JsValue GetOwnPropertyDescriptor(JsValue thisObject, JsValue[] arguments)
